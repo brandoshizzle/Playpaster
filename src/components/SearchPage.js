@@ -5,7 +5,7 @@ import TextField from "@material-ui/core/TextField";
 import axios from "axios";
 import { nameFilter } from "./filters";
 
-function clearAnd
+// function clearAnd
 
 const SearchPage = (props) => {
 	const { token } = props;
