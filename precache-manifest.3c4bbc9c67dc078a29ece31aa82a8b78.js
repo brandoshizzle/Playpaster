@@ -1,11 +1,11 @@
 self.__precacheManifest = [
   {
-    "revision": "025673db5e27ead3dee9",
+    "revision": "308835d1a6296c3011fc",
     "url": "/Playpaster/static/css/main.f82c2b86.chunk.css"
   },
   {
-    "revision": "025673db5e27ead3dee9",
-    "url": "/Playpaster/static/js/main.9106d0e3.chunk.js"
+    "revision": "308835d1a6296c3011fc",
+    "url": "/Playpaster/static/js/main.e0902d63.chunk.js"
   },
   {
     "revision": "2a444a78cbd56588224d",
@@ -24,7 +24,7 @@ self.__precacheManifest = [
     "url": "/Playpaster/static/media/_DSC0223.c54db777.jpg"
   },
   {
-    "revision": "dc3ebbb9a6d134e10c1631ae533cdb20",
+    "revision": "df127399ce3137b28751960c528220ee",
     "url": "/Playpaster/index.html"
   }
 ];
