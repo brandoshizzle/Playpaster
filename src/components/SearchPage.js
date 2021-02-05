@@ -3,19 +3,36 @@ import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container";
 import TextField from "@material-ui/core/TextField";
 import axios from "axios";
-import { nameFilter } from "./filters";
+import { nameFilter, previousFilter } from "./filters";
 
-// function clearAnd
+const defaultMessage = `Hey {first name},
+I stumbled on your {playlist name} playlist on Spotify (if it actually is your playlist) and I really enjoy it!
+
+A friend of mine, an aspiring instrumental pianist from Edmonton, Canada, recently released a new single that may fit nicely on your playlist! If you want to check it out, it’s called {song name}.
+
+{song link}
+
+Thanks for reading my message and keep up your great taste in music! Sorry for the unsolicited message, but I hope you enjoy the music and have a wonderful day!
+
+Tyler`;
 
 const SearchPage = (props) => {
-	const { token } = props;
+	let { token } = props;
 	const [searchTerm, setSearchTerm] = useState("");
 	const [playlists, setPlaylists] = useState([]);
 	const [offset, setOffset] = useState(0);
 	const [playlistsToKeep, setPlaylistsToKeep] = useState([]);
+	const [alertOpen, setAlertOpen] = useState("none");
+	const [badNameCount, setBadNameCount] = useState(0);
+	const [alreadyGotItCount, setAlreadyGotItCount] = useState(0);
+	const [searchTotal, setSearchTotal] = useState(0);
+	const [resultsTableRows, setResultsTableRows] = useState([]);
+	const [noPicCount, setNoPicCount] = useState(0);
 
 	useEffect(() => {
 		console.log(token);
+		document.getElementById("message").value =
+			localStorage.getItem("message") || defaultMessage;
 	}, []);
 
 	const handleChange = (event) => {
@@ -28,113 +45,215 @@ const SearchPage = (props) => {
 		}
 	};
 
-	const addToList = (e) => {
-		const playlistID = e.target.id;
-		document.getElementById(e.target.id).parentElement.style.opacity = 0.2;
-		setPlaylistsToKeep([...playlistsToKeep, playlistID]);
-	};
+	function previousPicksToArray() {
+		let text = document.getElementById("previous-playlists").value;
+		const firstHTTP = text.indexOf("https");
+		text = text.substring(firstHTTP);
+		let previousPlaylistIdArray = text.split(" ");
+		previousPlaylistIdArray = previousPlaylistIdArray.map((val, i) => {
+			const lastSlash = val.lastIndexOf("/");
+			return val.substring(lastSlash + 1);
+		});
+		localStorage.setItem(
+			"previousPlaylists",
+			JSON.stringify(previousPlaylistIdArray)
+		);
+	}
 
 	async function searchTime() {
 		console.log(searchTerm);
 		let playlistsTemp = [];
 		let nextLink;
 		let batchNum = 1;
-		do {
-			const res = await axios.get(
-				nextLink ||
-					`https://api.spotify.com/v1/search?q=${searchTerm}&type=playlist&limit=50&offset=${offset}`,
-				{
-					headers: {
-						Authorization: "Bearer " + token,
-						"Content-Type": "application/json",
-					},
-				}
-			);
-			// Make sure the response is good
-			nextLink = res.data.playlists.next;
-			playlistsTemp.push(...res.data.playlists.items);
-			console.log(`batch ${batchNum}`);
-			console.log(res);
-			batchNum++;
-		} while (nextLink && playlistsTemp.length < 100);
-		setOffset(offset + playlistsTemp.length);
+		try {
+			do {
+				const res = await axios.get(
+					nextLink ||
+						`https://api.spotify.com/v1/search?q=${searchTerm}&type=playlist&limit=50&offset=${offset}`,
+					{
+						headers: {
+							Authorization: "Bearer " + token,
+							"Content-Type": "application/json",
+						},
+					}
+				);
+				// Make sure the response is good
+				nextLink = res.data.playlists.next;
+				playlistsTemp.push(...res.data.playlists.items);
+				console.log(res);
+				batchNum++;
+				setSearchTotal(res.data.playlists.total);
+			} while (nextLink && playlistsTemp.length < 100);
+		} catch (e) {
+			setAlertOpen("block");
+		}
+		const newOffset = offset + playlistsTemp.length;
+		setOffset(newOffset);
 		// Sort and filter
+		const batchSize = playlistsTemp.length;
+		console.log(batchSize);
 		playlistsTemp = nameFilter(playlistsTemp);
-		console.log(playlistsTemp);
+		const nameFilterCount = batchSize - playlistsTemp.length;
+		console.log(nameFilterCount);
+		setBadNameCount(nameFilterCount);
+		playlistsTemp = previousFilter(playlistsTemp);
+		const previousFilterCount =
+			batchSize - nameFilterCount - playlistsTemp.length;
+		console.log(previousFilterCount);
+		setAlreadyGotItCount(previousFilterCount);
 		let playlistsToShow = [];
+		let noPicCountTemp = 0;
 		// Get user photos
 		for (var i = 0; i < playlistsTemp.length; i++) {
 			const playlist = playlistsTemp[i];
 			console.log(i);
-			const beans = await axios.get(
-				`https://api.spotify.com/v1/users/${playlist.owner.id}`,
-				{
-					headers: {
-						Authorization: "Bearer " + token,
-						"Content-Type": "application/json",
-					},
-				}
-			);
-			console.log(beans);
+			let beans;
+			try {
+				beans = await axios.get(
+					`https://api.spotify.com/v1/users/${playlist.owner.id}`,
+					{
+						headers: {
+							Authorization: "Bearer " + token,
+							"Content-Type": "application/json",
+						},
+					}
+				);
+			} catch (e) {
+				continue;
+			}
 			// If they have a picture, add them to the list
 			if (beans.data.images.length > 0) {
 				playlistsToShow.push({
 					id: playlist.id,
 					name: playlist.name,
-					author: playlist.owner.display_name,
+					owner: playlist.owner.display_name,
 					image: beans.data.images[0].url,
 				});
+			} else {
+				noPicCountTemp++;
 			}
 		}
-
+		setNoPicCount(noPicCountTemp);
 		setPlaylists(playlistsToShow);
 		// user.log(`Retrieved ${res.data.items.length} playlists`);
 	}
 
+	const addToList = async (e) => {
+		const playlistID = e.target.id;
+		const playlistInfo = playlists.find((x) => x.id === playlistID);
+		let newPlaylist = [];
+		document.getElementById(e.target.id).parentElement.style.opacity = 0.2;
+		try {
+			let res;
+			const apiURL = `https://api.spotify.com/v1/playlists/${playlistID}`;
+			res = await axios.get(apiURL, {
+				headers: {
+					Authorization: "Bearer " + token,
+					"Content-Type": "application/json",
+				},
+			});
+
+			if (res.status === 200) {
+				console.log("got data", res.data.name);
+				let d = res.data;
+				if (d.followers.total > 3) {
+					newPlaylist = {
+						...playlistInfo,
+						playlist_url: d.external_urls.spotify,
+						owner_url: d.owner.external_urls.spotify,
+						followers: d.followers.total,
+					};
+					setPlaylistsToKeep([...playlistsToKeep, newPlaylist]);
+				}
+			} else {
+				setAlertOpen("block");
+			}
+		} catch (e) {
+			setAlertOpen("block");
+		}
+	};
+
+	const copyMessage = (info) => {
+		const copyText = document.getElementById("message").value;
+		const songName = document.getElementById("song-name").value;
+		const songLink = document.getElementById("song-link").value;
+		// Replace all elements
+		const text = copyText
+			.replace("{first name}", info.owner.split(" ")[0])
+			.replace("{playlist name}", info.name)
+			.replace("{song name}", songName)
+			.replace("{song link}", songLink);
+
+		var textArea = document.createElement("textarea");
+		textArea.style.position = "fixed";
+		textArea.style.top = 0;
+		textArea.style.left = 0;
+		textArea.style.width = "2em";
+		textArea.style.height = "2em";
+		textArea.style.padding = 0;
+		textArea.style.border = "none";
+		textArea.style.outline = "none";
+		textArea.style.boxShadow = "none";
+		textArea.style.background = "transparent";
+		textArea.value = text;
+		document.body.appendChild(textArea);
+		textArea.focus();
+		textArea.select();
+		try {
+			var successful = document.execCommand("copy");
+			var msg = successful ? "successful" : "unsuccessful";
+			console.log("Copying text command was " + msg);
+		} catch (err) {
+			console.log("Oops, unable to copy");
+		}
+
+		document.body.removeChild(textArea);
+	};
+
 	const getPlaylistsForExport = async () => {
 		let resultsArray = [];
-		const idArray = JSON.parse(JSON.stringify(playlistsToKeep));
-		for (var i = 0; i < idArray.length; i++) {
-			const playlistId = idArray[i];
-			console.log(playlistId);
-			try {
-				let res;
-				// Remove old tracks
-				const apiURL = `https://api.spotify.com/v1/playlists/${playlistId}`;
-				res = await axios.get(apiURL, {
-					headers: {
-						Authorization: "Bearer " + token,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (res.status === 200) {
-					console.log("got data", res.data.name);
-					let d = res.data;
-					// Playlist Name, Playlist Link, Creator Name, Creator Link, Followers
-					resultsArray[i] = [
-						d.name,
-						d.external_urls.spotify,
-						d.owner.display_name,
-						d.owner.external_urls.spotify,
-						d.followers.total,
-					];
-				} else {
-					console.log(`Getting data gave us an error. Not cool man.`);
-				}
-			} catch (err) {
-				console.log(`Getting data gave us an error. Not cool man.`);
-				console.log(err);
-			}
+		const playlistArray = JSON.parse(JSON.stringify(playlistsToKeep));
+		for (var i = 0; i < playlistArray.length; i++) {
+			const playlist = playlistArray[i];
+			// Playlist Name, Playlist Link, Creator Name, Creator Link, Followers, Song, Search Term, FB Link, nothing, attacked (yee), attacked by (inits), nothing, date
+			resultsArray[i] = (
+				<tr key={i}>
+					<td>{playlist.name}</td>
+					<td>{playlist.playlist_url}</td>
+					<td>{playlist.owner}</td>
+					<td>{playlist.owner_url}</td>
+					<td>{playlist.followers}</td>
+					<td>{document.getElementById("song-name").value}</td>
+					<td>{searchTerm}</td>
+					<td>
+						{document.getElementById(`fblink-${playlist.id}`)
+							.value || "nay"}
+					</td>
+					<td>{""}</td>
+					<td>
+						{document.getElementById(`messaged-${playlist.id}`)
+							.checked
+							? "yee"
+							: "nay"}
+					</td>
+					<td>
+						{document.getElementById(`messaged-${playlist.id}`)
+							.checked
+							? document.getElementById("user-name").value
+							: ""}
+					</td>
+					<td>{""}</td>
+					<td>
+						{document.getElementById(`messaged-${playlist.id}`)
+							.checked
+							? new Date(Date.now()).toLocaleDateString()
+							: ""}
+					</td>
+				</tr>
+			);
 		}
-		console.log(`All done boss.`);
 
-		for (var j = 0; j < resultsArray.length; j++) {
-			resultsArray[j] = resultsArray[j].join(" ## ");
-		}
-
-		document.getElementById("copy-text").value = resultsArray.join("\n");
-		return resultsArray.join("\n");
+		setResultsTableRows(resultsArray);
 	};
 
 	const resultCards = playlists.map((playlist) => (
@@ -149,25 +268,117 @@ const SearchPage = (props) => {
 			key={playlist.id}>
 			<img
 				src={playlist.image}
-				alt="author"
+				alt="owner"
 				style={{ width: "100%" }}
 				id={playlist.id}
 				onClick={addToList}
 			/>
 			<p>
-				<strong>{playlist.author}</strong>
+				<strong>{playlist.owner}</strong>
 			</p>
 			<p>{playlist.name}</p>
 		</div>
 	));
 
-	const playlistsToKeepElements = playlistsToKeep.map((id) => (
-		<li key={id}>{id}</li>
+	const playlistsToKeepElements = playlistsToKeep.map((info) => (
+		<div key={info.id} style={{ display: "flex", flexDirection: "row" }}>
+			<img src={info.image} height={100} alt="pic" />
+			<div style={{ minWidth: 400 }}>
+				<h3 style={{ margin: 2, padding: 5 }}>{info.owner}</h3>
+				<h4 style={{ margin: 2, padding: 5 }}>{info.name}</h4>
+				<p style={{ margin: 2, padding: 5 }}>
+					{info.followers} followers
+				</p>
+			</div>
+			<div>
+				<a
+					href={`https://www.facebook.com/search/people/?q=${info.owner}`}
+					target="_blank"
+					rel="noopener noreferrer"
+					onClick={() => copyMessage(info)}>
+					Search on Facebook
+				</a>
+				<br />
+				<input placeholder={"Paste FB here"} id={`fblink-${info.id}`} />
+				<br />
+				<input
+					type="checkbox"
+					id={`messaged-${info.id}`}
+					name="messaged"
+				/>
+				<label for="messaged"> Messaged them</label>
+			</div>
+		</div>
 	));
 
 	return (
 		<Container fixed style={{ marginTop: 50 }}>
-			<div style={{ textAlign: "center" }}>
+			<h3>1. Setup</h3>
+			<Button
+				variant="contained"
+				color="primary"
+				onClick={() => {
+					localStorage.removeItem("token");
+					window.location.reload();
+				}}>
+				Get Spotify token
+			</Button>
+			<br />
+			<br />
+			<TextField
+				id="user-name"
+				label="Your Initials"
+				variant="outlined"
+				style={{ width: "50%", marginBottom: 20 }}
+			/>
+			<br />
+			<TextField
+				id="song-name"
+				label="Promoting Song Name"
+				variant="outlined"
+				style={{ width: "50%", marginBottom: 20 }}
+			/>
+			<TextField
+				id="song-link"
+				label="Promoting Song Link"
+				variant="outlined"
+				style={{ width: "50%", marginBottom: 20 }}
+			/>
+			<br />
+			<TextField
+				id="previous-playlists"
+				label="List of playlist links we've already got"
+				variant="outlined"
+				style={{ width: "50%", marginBottom: 20 }}
+			/>
+			<br />
+			<Button
+				variant="contained"
+				color="primary"
+				onClick={() => previousPicksToArray()}>
+				Process saved playlists
+			</Button>
+			<h3>2. Make sure the message looks good</h3>
+			<TextField
+				style={{ width: "100%", minHeight: 300 }}
+				label="Message"
+				variant="outlined"
+				multiline
+				id="message"
+			/>
+			<Button
+				variant="contained"
+				color="primary"
+				onClick={() =>
+					localStorage.setItem(
+						"message",
+						document.getElementById("message").value
+					)
+				}>
+				Save
+			</Button>
+			<h3>3. Search for playlists on Spotify</h3>
+			<div>
 				<TextField
 					id="outlined-basic"
 					label="Spotify Search Term"
@@ -175,9 +386,19 @@ const SearchPage = (props) => {
 					style={{ width: "50%", marginBottom: 20 }}
 					onChange={handleChange}
 					onKeyDown={_handleKeyDown}
-				/>{" "}
+				/>
 				<br />
 			</div>
+			<div>
+				<p style={{ display: offset > 0 ? "block" : "none" }}>
+					Gathering 100 playlists out of {searchTotal}... Filtered{" "}
+					{badNameCount} unlikely names... Filtered{" "}
+					{alreadyGotItCount} previously logged playlists... Filtered{" "}
+					{noPicCount} without profile pictures... Returning{" "}
+					{playlists.length}.
+				</p>
+			</div>
+			<h3>4. Pick promising playlists</h3>
 			<div
 				style={{
 					background: "green",
@@ -196,17 +417,38 @@ const SearchPage = (props) => {
 				onClick={() => searchTime()}>
 				Get 100 more
 			</Button>
-			<h3>Playlists you're exporting</h3>
+			<h3>5. Find and message them on Facebook</h3>
 			<ol>{playlistsToKeepElements}</ol>
 			<br />
+
+			<h3>6. Generate text to paste into the tracking spreadsheet</h3>
 			<Button
 				variant="contained"
 				color="primary"
 				onClick={() => getPlaylistsForExport()}>
 				Generate Copy Text
 			</Button>
-			<h3>Copy Text</h3>
-			<textarea id="copy-text">{"beans\nbeans"}</textarea>
+			<br />
+			<br />
+			<table style={{ width: "100%", border: "2px solid black" }}>
+				{resultsTableRows}
+			</table>
+			<div
+				style={{
+					position: "fixed",
+					display: alertOpen,
+					width: "100%",
+					height: 50,
+					background: "red",
+					top: 0,
+					left: 0,
+					textAlign: "center",
+				}}>
+				<p style={{ color: "white" }}>
+					Error with Spotify request - please get new Spotify token
+					(step 1)
+				</p>
+			</div>
 		</Container>
 	);
 };

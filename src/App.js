@@ -64,7 +64,7 @@ class App extends Component {
 			<ThemeProvider theme={LSTheme}>
 				<header>
 					<div className="App">
-						<div className="bg">
+						<div>
 							{!this.state.token && (
 								<div className="App-header">
 									<Typography
@@ -74,7 +74,7 @@ class App extends Component {
 											textShadow:
 												"0px 5px 10px rgba(0,0,0,0.9)",
 										}}>
-										Little Conductor
+										Playpasting Time
 									</Typography>
 									<a
 										className="btn btn--loginApp-link"

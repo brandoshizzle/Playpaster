@@ -11,10 +11,28 @@ export function nameFilter(playlists) {
 		}
 		if (name.indexOf(" ") > -1) {
 			nameOnes.push(playlist);
+		} else if ((name.match(/./g) || []).length === 1) {
+			playlist.owner.display_name = name.split(".").join(" ");
+			nameOnes.push(playlist);
 		} else {
 			others.push(playlist);
 		}
 	}
 
-	return [...nameOnes, ...others];
+	// return [...nameOnes, ...others];
+	return nameOnes;
+}
+
+export function previousFilter(playlists) {
+	const previousPlaylistIds = localStorage.getItem("previousPlaylists");
+	const goodOnes = [];
+	if (!previousPlaylistIds) {
+		return playlists;
+	}
+	for (var i = 0; i < playlists.length; i++) {
+		if (previousPlaylistIds.indexOf(playlists[i].id) === -1) {
+			goodOnes.push(playlists[i]);
+		}
+	}
+	return goodOnes;
 }
