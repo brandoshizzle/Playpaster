@@ -1,15 +1,14 @@
 {
   "main.css": "/Playpaster/static/css/main.f82c2b86.chunk.css",
-  "main.js": "/Playpaster/static/js/main.ee7011f3.chunk.js",
-  "main.js.map": "/Playpaster/static/js/main.ee7011f3.chunk.js.map",
+  "main.js": "/Playpaster/static/js/main.b5947f16.chunk.js",
+  "main.js.map": "/Playpaster/static/js/main.b5947f16.chunk.js.map",
   "runtime~main.js": "/Playpaster/static/js/runtime~main.8cb554cf.js",
   "runtime~main.js.map": "/Playpaster/static/js/runtime~main.8cb554cf.js.map",
-  "static/js/2.f284fb96.chunk.js": "/Playpaster/static/js/2.f284fb96.chunk.js",
-  "static/js/2.f284fb96.chunk.js.map": "/Playpaster/static/js/2.f284fb96.chunk.js.map",
+  "static/js/2.cc69f813.chunk.js": "/Playpaster/static/js/2.cc69f813.chunk.js",
+  "static/js/2.cc69f813.chunk.js.map": "/Playpaster/static/js/2.cc69f813.chunk.js.map",
   "index.html": "/Playpaster/index.html",
-  "precache-manifest.016b34a4307448c59b235f54a5c34a95.js": "/Playpaster/precache-manifest.016b34a4307448c59b235f54a5c34a95.js",
+  "precache-manifest.89abc275affb9220265020f46f14ef92.js": "/Playpaster/precache-manifest.89abc275affb9220265020f46f14ef92.js",
   "service-worker.js": "/Playpaster/service-worker.js",
   "static/css/main.f82c2b86.chunk.css.map": "/Playpaster/static/css/main.f82c2b86.chunk.css.map",
-  "static/media/App.css": "/Playpaster/static/media/_DSC0223.c54db777.jpg",
-  "static/media/logo.svg": "/Playpaster/static/media/logo.ee7cd8ed.svg"
+  "static/media/App.css": "/Playpaster/static/media/_DSC0223.c54db777.jpg"
 }
