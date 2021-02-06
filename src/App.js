@@ -4,7 +4,6 @@ import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import hash from "./hash";
 import Main from "./components/Main";
-import logo from "./logo.svg";
 import "./App.css";
 import { user } from "./store";
 

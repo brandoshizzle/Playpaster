@@ -8,13 +8,13 @@ import { nameFilter, previousFilter } from "./filters";
 const defaultMessage = `Hey {first name},
 I stumbled on your {playlist name} playlist on Spotify (if it actually is your playlist) and I really enjoy it!
 
-A friend of mine, an aspiring instrumental pianist from Edmonton, Canada, recently released a new single that may fit nicely on your playlist! If you want to check it out, it’s called {song name}.
-
-{song link}
+A friend of mine, an aspiring instrumental pianist from Edmonton, Canada, recently released a new single that may fit nicely on your playlist! If you want to check it out, it’s called {song name}, a link is below.
 
 Thanks for reading my message and keep up your great taste in music! Sorry for the unsolicited message, but I hope you enjoy the music and have a wonderful day!
 
-Tyler`;
+Tyler
+
+{song link}`;
 
 const SearchPage = (props) => {
 	let { token } = props;
@@ -46,10 +46,11 @@ const SearchPage = (props) => {
 	};
 
 	function previousPicksToArray() {
-		let text = document.getElementById("previous-playlists").value;
-		const firstHTTP = text.indexOf("https");
-		text = text.substring(firstHTTP);
-		let previousPlaylistIdArray = text.split(" ");
+		// Get playlist link text, parse it, and save it to local storage
+		let playlistsText = document.getElementById("previous-playlists").value;
+		let firstHTTP = playlistsText.indexOf("https");
+		playlistsText = playlistsText.substring(firstHTTP);
+		let previousPlaylistIdArray = playlistsText.split(" ");
 		previousPlaylistIdArray = previousPlaylistIdArray.map((val, i) => {
 			const lastSlash = val.lastIndexOf("/");
 			return val.substring(lastSlash + 1);
@@ -57,6 +58,19 @@ const SearchPage = (props) => {
 		localStorage.setItem(
 			"previousPlaylists",
 			JSON.stringify(previousPlaylistIdArray)
+		);
+		// Get playlist link text, parse it, and save it to local storage
+		let ownersText = document.getElementById("previous-owners").value;
+		firstHTTP = ownersText.indexOf("https");
+		ownersText = ownersText.substring(firstHTTP);
+		let previousOwnerIdArray = ownersText.split(" ");
+		previousOwnerIdArray = previousOwnerIdArray.map((val, i) => {
+			const lastSlash = val.lastIndexOf("/");
+			return val.substring(lastSlash + 1);
+		});
+		localStorage.setItem(
+			"previousOwners",
+			JSON.stringify(previousOwnerIdArray)
 		);
 	}
 
@@ -127,6 +141,7 @@ const SearchPage = (props) => {
 					id: playlist.id,
 					name: playlist.name,
 					owner: playlist.owner.display_name,
+					ownerId: playlist.owner.id,
 					image: beans.data.images[0].url,
 				});
 			} else {
@@ -281,32 +296,66 @@ const SearchPage = (props) => {
 	));
 
 	const playlistsToKeepElements = playlistsToKeep.map((info) => (
-		<div key={info.id} style={{ display: "flex", flexDirection: "row" }}>
-			<img src={info.image} height={100} alt="pic" />
-			<div style={{ minWidth: 400 }}>
+		<div
+			key={info.id}
+			style={{
+				display: "flex",
+				flexDirection: "row",
+				width: "100%",
+				margin: 10,
+			}}>
+			<img src={info.image} width={100} alt="pic" />
+			<div style={{ width: "40%" }}>
 				<h3 style={{ margin: 2, padding: 5 }}>{info.owner}</h3>
 				<h4 style={{ margin: 2, padding: 5 }}>{info.name}</h4>
 				<p style={{ margin: 2, padding: 5 }}>
 					{info.followers} followers
 				</p>
 			</div>
-			<div>
+			<div style={{ display: "flex" }}>
 				<a
 					href={`https://www.facebook.com/search/people/?q=${info.owner}`}
+					style={{
+						textDecoration: "none",
+					}}
 					target="_blank"
 					rel="noopener noreferrer"
 					onClick={() => copyMessage(info)}>
-					Search on Facebook
+					<Button
+						variant="contained"
+						style={{ width: 210, marginTop: 8, marginRight: 5 }}
+						color={
+							JSON.parse(
+								localStorage.getItem("previousOwners")
+							).indexOf(info.ownerId) > -1
+								? "default"
+								: "primary"
+						}>
+						{JSON.parse(
+							localStorage.getItem("previousOwners")
+						).indexOf(info.ownerId) > -1
+							? "Owner in database"
+							: "Search on Facebook"}
+					</Button>
 				</a>
-				<br />
-				<input placeholder={"Paste FB here"} id={`fblink-${info.id}`} />
-				<br />
-				<input
-					type="checkbox"
-					id={`messaged-${info.id}`}
-					name="messaged"
+				{/* <br /> */}
+				{/* <input placeholder={"Paste FB here"} id={`fblink-${info.id}`} /> */}
+				<TextField
+					style={{ flex: 1 }}
+					label="Paste FB Here"
+					variant="outlined"
+					id={`fblink-${info.id}`}
 				/>
-				<label for="messaged"> Messaged them</label>
+				<br />
+
+				<label>
+					<input
+						type="checkbox"
+						id={`messaged-${info.id}`}
+						name="messaged"
+					/>{" "}
+					Messaged them
+				</label>
 			</div>
 		</div>
 	));
@@ -347,7 +396,13 @@ const SearchPage = (props) => {
 			<br />
 			<TextField
 				id="previous-playlists"
-				label="List of playlist links we've already got"
+				label="Playlist links from spreadsheet"
+				variant="outlined"
+				style={{ width: "50%", marginBottom: 20 }}
+			/>
+			<TextField
+				id="previous-owners"
+				label="Playlist owners from spreadsheet"
 				variant="outlined"
 				style={{ width: "50%", marginBottom: 20 }}
 			/>
