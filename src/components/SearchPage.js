@@ -33,6 +33,12 @@ const SearchPage = (props) => {
 		console.log(token);
 		document.getElementById("message").value =
 			localStorage.getItem("message") || defaultMessage;
+		document.getElementById("user-name").value =
+			localStorage.getItem("userName") || "";
+		document.getElementById("song-name").value =
+			localStorage.getItem("songName") || "";
+		document.getElementById("song-link").value =
+			localStorage.getItem("songLink") || "";
 	}, []);
 
 	const handleChange = (event) => {
@@ -59,7 +65,7 @@ const SearchPage = (props) => {
 			"previousPlaylists",
 			JSON.stringify(previousPlaylistIdArray)
 		);
-		// Get playlist link text, parse it, and save it to local storage
+		// Get owners link text, parse it, and save it to local storage
 		let ownersText = document.getElementById("previous-owners").value;
 		firstHTTP = ownersText.indexOf("https");
 		ownersText = ownersText.substring(firstHTTP);
@@ -72,13 +78,26 @@ const SearchPage = (props) => {
 			"previousOwners",
 			JSON.stringify(previousOwnerIdArray)
 		);
+		// Save username, song name, and song link to local storage
+		localStorage.setItem(
+			"userName",
+			document.getElementById("user-name").value
+		);
+		localStorage.setItem(
+			"songName",
+			document.getElementById("song-name").value
+		);
+		localStorage.setItem(
+			"songLink",
+			document.getElementById("song-link").value
+		);
 	}
 
+	// Take a Spotify search query, filter out results, and present what's left
 	async function searchTime() {
 		console.log(searchTerm);
 		let playlistsTemp = [];
 		let nextLink;
-		let batchNum = 1;
 		try {
 			do {
 				const res = await axios.get(
@@ -95,7 +114,6 @@ const SearchPage = (props) => {
 				nextLink = res.data.playlists.next;
 				playlistsTemp.push(...res.data.playlists.items);
 				console.log(res);
-				batchNum++;
 				setSearchTotal(res.data.playlists.total);
 			} while (nextLink && playlistsTemp.length < 100);
 		} catch (e) {
@@ -150,9 +168,9 @@ const SearchPage = (props) => {
 		}
 		setNoPicCount(noPicCountTemp);
 		setPlaylists(playlistsToShow);
-		// user.log(`Retrieved ${res.data.items.length} playlists`);
 	}
 
+	// When you click on a playlist result, search for followers and add it to the list to search on FB
 	const addToList = async (e) => {
 		const playlistID = e.target.id;
 		const playlistInfo = playlists.find((x) => x.id === playlistID);
@@ -353,6 +371,13 @@ const SearchPage = (props) => {
 						type="checkbox"
 						id={`messaged-${info.id}`}
 						name="messaged"
+						disabled={
+							JSON.parse(
+								localStorage.getItem("previousOwners")
+							).indexOf(info.ownerId) > -1
+								? true
+								: false
+						}
 					/>{" "}
 					Messaged them
 				</label>
@@ -411,7 +436,7 @@ const SearchPage = (props) => {
 				variant="contained"
 				color="primary"
 				onClick={() => previousPicksToArray()}>
-				Process saved playlists
+				Save Setup
 			</Button>
 			<h3>2. Make sure the message looks good</h3>
 			<TextField
@@ -430,7 +455,7 @@ const SearchPage = (props) => {
 						document.getElementById("message").value
 					)
 				}>
-				Save
+				Save Message
 			</Button>
 			<h3>3. Search for playlists on Spotify</h3>
 			<div>
