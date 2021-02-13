@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/Playpaster/precache-manifest.b235d1c021d2fe2d72188cde40ca5aee.js"
+  "/Playpaster/precache-manifest.38350cc031619e33e1fbb0cd1553fe84.js"
 );
 
 workbox.clientsClaim();
