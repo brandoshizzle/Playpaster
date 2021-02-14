@@ -23,14 +23,17 @@ export function nameFilter(playlists) {
 	return nameOnes;
 }
 
-export function previousFilter(playlists) {
+export function previousFilter(playlists, tooFewFollowersList) {
 	const previousPlaylistIds = localStorage.getItem("previousPlaylists");
 	const goodOnes = [];
 	if (!previousPlaylistIds) {
 		return playlists;
 	}
 	for (var i = 0; i < playlists.length; i++) {
-		if (previousPlaylistIds.indexOf(playlists[i].id) === -1) {
+		if (
+			previousPlaylistIds.indexOf(playlists[i].id) === -1 &&
+			tooFewFollowersList.indexOf(playlists[i].id) === -1
+		) {
 			goodOnes.push(playlists[i]);
 		}
 	}

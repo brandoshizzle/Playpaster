@@ -2,17 +2,39 @@ import React, { useState, useEffect } from "react";
 import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container";
 import TextField from "@material-ui/core/TextField";
+import InputLabel from "@material-ui/core/InputLabel";
+import MenuItem from "@material-ui/core/MenuItem";
+import FormControl from "@material-ui/core/FormControl";
+import Select from "@material-ui/core/Select";
 import axios from "axios";
 import { nameFilter, previousFilter } from "./filters";
+import { songDetails, artistFlavour } from "./songs";
 
-const defaultMessage = `Hey {first name},
-I stumbled on your {playlist name} playlist on Spotify (if it actually is your playlist) and I really enjoy it!
+const defaultSmallMessage = `Hello {first name},
 
-A friend of mine, an aspiring instrumental pianist from Edmonton, Canada, recently released a new single that may fit nicely on your playlist! If you want to check it out, it’s called {song name}, a link is below.
+My name is {your first name} and I'm with a group called Little Symphony Records. We help emerging artists get their music off the page and into peoples ears!
 
-Thanks for reading my message and keep up your great taste in music! Sorry for the unsolicited message, but I hope you enjoy the music and have a wonderful day!
+I came across your playlist "{playlist name}", and I was wondering if you'd consider adding a song to it? {artist flavour text} I think they would be a good fit! (Song link below)
 
-Tyler
+Being added to your playlist could be a game changer for {artist name}!
+
+Thanks for reading this, and keep having such good taste in music,
+
+{your first name}
+
+{song link}`;
+
+const defaultBigMessage = `Hello {first name},
+
+My name is {your first name} and I'm with a group called Little Symphony Records. We help emerging artists get their music off the page and into peoples ears!
+
+I came across your playlist "{playlist name}", and I was wondering if you'd consider adding a song to it? {artist flavour text} I think they would be a good fit! (Song link below)
+
+Being added to your playlist could be a game changer for {artist name},
+
+Thanks for reading this, and keep having such good taste in music.
+
+{your first name}
 
 {song link}`;
 
@@ -28,17 +50,21 @@ const SearchPage = (props) => {
 	const [searchTotal, setSearchTotal] = useState(0);
 	const [resultsTableRows, setResultsTableRows] = useState([]);
 	const [noPicCount, setNoPicCount] = useState(0);
+	const [song, setSong] = useState(
+		localStorage.getItem("songName") || "Ikigai"
+	);
+
+	let tooFewFollowersList = [];
 
 	useEffect(() => {
 		console.log(token);
-		document.getElementById("message").value =
-			localStorage.getItem("message") || defaultMessage;
+		document.getElementById("message-small").value =
+			localStorage.getItem("message-small") || defaultSmallMessage;
+		document.getElementById("message-big").value =
+			localStorage.getItem("message-big") || defaultBigMessage;
 		document.getElementById("user-name").value =
 			localStorage.getItem("userName") || "";
-		document.getElementById("song-name").value =
-			localStorage.getItem("songName") || "";
-		document.getElementById("song-link").value =
-			localStorage.getItem("songLink") || "";
+		tooFewFollowersList = localStorage.getItem("tooFewFollowersList") || [];
 	}, []);
 
 	const handleChange = (event) => {
@@ -83,14 +109,7 @@ const SearchPage = (props) => {
 			"userName",
 			document.getElementById("user-name").value
 		);
-		localStorage.setItem(
-			"songName",
-			document.getElementById("song-name").value
-		);
-		localStorage.setItem(
-			"songLink",
-			document.getElementById("song-link").value
-		);
+		localStorage.setItem("songName", song);
 	}
 
 	// Take a Spotify search query, filter out results, and present what's left
@@ -128,7 +147,7 @@ const SearchPage = (props) => {
 		const nameFilterCount = batchSize - playlistsTemp.length;
 		console.log(nameFilterCount);
 		setBadNameCount(nameFilterCount);
-		playlistsTemp = previousFilter(playlistsTemp);
+		playlistsTemp = previousFilter(playlistsTemp, tooFewFollowersList);
 		const previousFilterCount =
 			batchSize - nameFilterCount - playlistsTemp.length;
 		console.log(previousFilterCount);
@@ -197,6 +216,8 @@ const SearchPage = (props) => {
 						followers: d.followers.total,
 					};
 					setPlaylistsToKeep([...playlistsToKeep, newPlaylist]);
+				} else {
+					tooFewFollowersList.push(playlistID);
 				}
 			} else {
 				setAlertOpen("block");
@@ -207,15 +228,23 @@ const SearchPage = (props) => {
 	};
 
 	const copyMessage = (info) => {
-		const copyText = document.getElementById("message").value;
-		const songName = document.getElementById("song-name").value;
-		const songLink = document.getElementById("song-link").value;
+		const copyText = document.getElementById("message-small").value;
+		const songDeets = songDetails.filter((obj) => obj.name === song)[0];
 		// Replace all elements
 		const text = copyText
-			.replace("{first name}", info.owner.split(" ")[0])
-			.replace("{playlist name}", info.name)
-			.replace("{song name}", songName)
-			.replace("{song link}", songLink);
+			.replaceAll("{first name}", info.owner.split(" ")[0])
+			.replaceAll("{playlist name}", info.name)
+			.replaceAll("{song name}", songDeets.name)
+			.replaceAll("{song link}", songDeets.link)
+			.replaceAll("{artist name}", songDeets.artist)
+			.replaceAll(
+				"{artist flavour text}",
+				artistFlavour[songDeets.artist]
+			)
+			.replaceAll(
+				"{your first name}",
+				document.getElementById("user-name").value.split(" ")[0]
+			);
 
 		var textArea = document.createElement("textarea");
 		textArea.style.position = "fixed";
@@ -245,6 +274,10 @@ const SearchPage = (props) => {
 
 	const getPlaylistsForExport = async () => {
 		let resultsArray = [];
+		localStorage.setItem(
+			"tooFewFollowersList",
+			JSON.stringify(tooFewFollowersList)
+		);
 		const playlistArray = JSON.parse(JSON.stringify(playlistsToKeep));
 		for (var i = 0; i < playlistArray.length; i++) {
 			const playlist = playlistArray[i];
@@ -256,7 +289,7 @@ const SearchPage = (props) => {
 					<td>{playlist.owner}</td>
 					<td>{playlist.owner_url}</td>
 					<td>{playlist.followers}</td>
-					<td>{document.getElementById("song-name").value}</td>
+					<td>{song.name}</td>
 					<td>{searchTerm}</td>
 					<td>
 						{document.getElementById(`fblink-${playlist.id}`)
@@ -301,11 +334,12 @@ const SearchPage = (props) => {
 			key={playlist.id}>
 			<img
 				src={playlist.image}
-				alt="owner"
+				alt="FB pic not loading - click to view"
 				style={{ width: "100%" }}
 				id={playlist.id}
 				onClick={addToList}
 			/>
+
 			<p>
 				<strong>{playlist.owner}</strong>
 			</p>
@@ -322,7 +356,14 @@ const SearchPage = (props) => {
 				width: "100%",
 				margin: 10,
 			}}>
-			<img src={info.image} width={100} alt="pic" />
+			<a href={info.image} target="_blank" rel="noopener noreferrer">
+				<img
+					src={info.image}
+					width={100}
+					alt="FB pic not loading - click to view"
+				/>
+			</a>
+
 			<div style={{ width: "40%" }}>
 				<h3 style={{ margin: 2, padding: 5 }}>{info.owner}</h3>
 				<h4 style={{ margin: 2, padding: 5 }}>{info.name}</h4>
@@ -385,6 +426,12 @@ const SearchPage = (props) => {
 		</div>
 	));
 
+	const songDropdownOptions = songDetails.map((song) => (
+		<MenuItem value={song.name} key={song.name}>
+			{song.artist} - {song.name}
+		</MenuItem>
+	));
+
 	return (
 		<Container fixed style={{ marginTop: 50 }}>
 			<h3>1. Setup</h3>
@@ -401,33 +448,49 @@ const SearchPage = (props) => {
 			<br />
 			<TextField
 				id="user-name"
-				label="Your Initials"
+				label="Your Name (ex. Brandon Cathcart)"
 				variant="outlined"
 				style={{ width: "50%", marginBottom: 20 }}
 			/>
 			<br />
+			<FormControl style={{ minWidth: 120, width: "50%" }}>
+				<InputLabel id="song-dropdown-label">Song</InputLabel>
+				<Select
+					labelId="song-dropdown-label"
+					id="demo-simple-select"
+					variant="outlined"
+					value={song}
+					label="Song to Promote"
+					onChange={(event) => {
+						setSong(event.target.value);
+					}}>
+					{songDropdownOptions}
+				</Select>
+			</FormControl>
+			<br />
 			<TextField
-				id="song-name"
-				label="Promoting Song Name"
+				id="flavour-text"
+				label="Artist flavour text"
 				variant="outlined"
-				style={{ width: "50%", marginBottom: 20 }}
-			/>
-			<TextField
-				id="song-link"
-				label="Promoting Song Link"
-				variant="outlined"
-				style={{ width: "50%", marginBottom: 20 }}
+				disabled
+				value={
+					artistFlavour[
+						songDetails.filter((obj) => obj.name === song)[0]
+							.artist || ""
+					]
+				}
+				style={{ width: "100%", marginBottom: 20, marginTop: 20 }}
 			/>
 			<br />
 			<TextField
 				id="previous-playlists"
-				label="Playlist links from spreadsheet"
+				label="Playlist URLs from spreadsheet"
 				variant="outlined"
 				style={{ width: "50%", marginBottom: 20 }}
 			/>
 			<TextField
 				id="previous-owners"
-				label="Playlist owners from spreadsheet"
+				label="Owner URLs from spreadsheet"
 				variant="outlined"
 				style={{ width: "50%", marginBottom: 20 }}
 			/>
@@ -440,22 +503,46 @@ const SearchPage = (props) => {
 			</Button>
 			<h3>2. Make sure the message looks good</h3>
 			<TextField
-				style={{ width: "100%", minHeight: 300 }}
-				label="Message"
+				style={{ width: "50%", minHeight: 300 }}
+				label="Small playlist message"
 				variant="outlined"
 				multiline
-				id="message"
+				id="message-small"
+			/>
+			<TextField
+				style={{ width: "50%", minHeight: 300 }}
+				label="Large playlist message"
+				variant="outlined"
+				multiline
+				id="message-big"
 			/>
 			<Button
 				variant="contained"
 				color="primary"
-				onClick={() =>
+				style={{ marginTop: 20, marginRight: 10 }}
+				onClick={() => {
 					localStorage.setItem(
-						"message",
-						document.getElementById("message").value
-					)
-				}>
-				Save Message
+						"message-small",
+						document.getElementById("message-small").value
+					);
+					localStorage.setItem(
+						"message-big",
+						document.getElementById("message-big").value
+					);
+				}}>
+				Save Messages
+			</Button>
+			<Button
+				variant="contained"
+				color="primary"
+				style={{ marginTop: 20 }}
+				onClick={() => {
+					copyMessage({
+						name: "Test Playlist",
+						owner: "Beans McGee",
+					});
+				}}>
+				Test Copy Message
 			</Button>
 			<h3>3. Search for playlists on Spotify</h3>
 			<div>
