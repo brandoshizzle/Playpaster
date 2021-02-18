@@ -31,10 +31,7 @@
 		"axios-hooks": "^1.10.0",
 		"jquery": "^3.4.1",
 		"lodash": "^4.17.19",
-		"material-table": "^1.57.2", 
 		"react": "^16.8.4",
-		"react-data-grid": "6.1.0",
-		"react-data-grid-addons": "6.1.0",
 		"react-dom": "^16.8.4",
 		"react-scripts": "2.1.8",
 		"react-sortablejs": "^2.0.11"

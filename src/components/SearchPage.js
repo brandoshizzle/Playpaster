@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import Button from "@material-ui/core/Button";
-import Container from "@material-ui/core/Container";
-import TextField from "@material-ui/core/TextField";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
-import axios from "axios";
-import { nameFilter, previousFilter } from "./filters";
-import { songDetails, artistFlavour } from "./songs";
+import React, { useState, useEffect } from 'react';
+import Button from '@material-ui/core/Button';
+import Container from '@material-ui/core/Container';
+import TextField from '@material-ui/core/TextField';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import axios from 'axios';
+import { nameFilter, previousFilter } from './filters';
+import { songDetails, artistFlavour } from './songs';
 
 const defaultSmallMessage = `Hello {first name},
 
@@ -40,31 +40,26 @@ Thanks for reading this, and keep having such good taste in music.
 
 const SearchPage = (props) => {
 	let { token } = props;
-	const [searchTerm, setSearchTerm] = useState("");
+	const [searchTerm, setSearchTerm] = useState('');
 	const [playlists, setPlaylists] = useState([]);
 	const [offset, setOffset] = useState(0);
 	const [playlistsToKeep, setPlaylistsToKeep] = useState([]);
-	const [alertOpen, setAlertOpen] = useState("none");
+	const [alertOpen, setAlertOpen] = useState('none');
 	const [badNameCount, setBadNameCount] = useState(0);
 	const [alreadyGotItCount, setAlreadyGotItCount] = useState(0);
 	const [searchTotal, setSearchTotal] = useState(0);
 	const [resultsTableRows, setResultsTableRows] = useState([]);
 	const [noPicCount, setNoPicCount] = useState(0);
-	const [song, setSong] = useState(
-		localStorage.getItem("songName") || "Ikigai"
-	);
+	const [song, setSong] = useState(localStorage.getItem('songName') || 'Ikigai');
 
 	let tooFewFollowersList = [];
 
 	useEffect(() => {
 		console.log(token);
-		document.getElementById("message-small").value =
-			localStorage.getItem("message-small") || defaultSmallMessage;
-		document.getElementById("message-big").value =
-			localStorage.getItem("message-big") || defaultBigMessage;
-		document.getElementById("user-name").value =
-			localStorage.getItem("userName") || "";
-		tooFewFollowersList = localStorage.getItem("tooFewFollowersList") || [];
+		document.getElementById('message-small').value = localStorage.getItem('message-small') || defaultSmallMessage;
+		document.getElementById('message-large').value = localStorage.getItem('message-large') || defaultBigMessage;
+		document.getElementById('user-name').value = localStorage.getItem('userName') || '';
+		tooFewFollowersList = localStorage.getItem('tooFewFollowersList') || [];
 	}, []);
 
 	const handleChange = (event) => {
@@ -72,44 +67,35 @@ const SearchPage = (props) => {
 		console.log(event.key);
 	};
 	const _handleKeyDown = (e) => {
-		if (e.key === "Enter") {
+		if (e.key === 'Enter') {
 			searchTime();
 		}
 	};
 
 	function previousPicksToArray() {
 		// Get playlist link text, parse it, and save it to local storage
-		let playlistsText = document.getElementById("previous-playlists").value;
-		let firstHTTP = playlistsText.indexOf("https");
+		let playlistsText = document.getElementById('previous-playlists').value;
+		let firstHTTP = playlistsText.indexOf('https');
 		playlistsText = playlistsText.substring(firstHTTP);
-		let previousPlaylistIdArray = playlistsText.split(" ");
+		let previousPlaylistIdArray = playlistsText.split(' ');
 		previousPlaylistIdArray = previousPlaylistIdArray.map((val, i) => {
-			const lastSlash = val.lastIndexOf("/");
+			const lastSlash = val.lastIndexOf('/');
 			return val.substring(lastSlash + 1);
 		});
-		localStorage.setItem(
-			"previousPlaylists",
-			JSON.stringify(previousPlaylistIdArray)
-		);
+		localStorage.setItem('previousPlaylists', JSON.stringify(previousPlaylistIdArray));
 		// Get owners link text, parse it, and save it to local storage
-		let ownersText = document.getElementById("previous-owners").value;
-		firstHTTP = ownersText.indexOf("https");
+		let ownersText = document.getElementById('previous-owners').value;
+		firstHTTP = ownersText.indexOf('https');
 		ownersText = ownersText.substring(firstHTTP);
-		let previousOwnerIdArray = ownersText.split(" ");
+		let previousOwnerIdArray = ownersText.split(' ');
 		previousOwnerIdArray = previousOwnerIdArray.map((val, i) => {
-			const lastSlash = val.lastIndexOf("/");
+			const lastSlash = val.lastIndexOf('/');
 			return val.substring(lastSlash + 1);
 		});
-		localStorage.setItem(
-			"previousOwners",
-			JSON.stringify(previousOwnerIdArray)
-		);
+		localStorage.setItem('previousOwners', JSON.stringify(previousOwnerIdArray));
 		// Save username, song name, and song link to local storage
-		localStorage.setItem(
-			"userName",
-			document.getElementById("user-name").value
-		);
-		localStorage.setItem("songName", song);
+		localStorage.setItem('userName', document.getElementById('user-name').value);
+		localStorage.setItem('songName', song);
 	}
 
 	// Take a Spotify search query, filter out results, and present what's left
@@ -124,8 +110,8 @@ const SearchPage = (props) => {
 						`https://api.spotify.com/v1/search?q=${searchTerm}&type=playlist&limit=50&offset=${offset}`,
 					{
 						headers: {
-							Authorization: "Bearer " + token,
-							"Content-Type": "application/json",
+							Authorization: 'Bearer ' + token,
+							'Content-Type': 'application/json',
 						},
 					}
 				);
@@ -136,7 +122,7 @@ const SearchPage = (props) => {
 				setSearchTotal(res.data.playlists.total);
 			} while (nextLink && playlistsTemp.length < 100);
 		} catch (e) {
-			setAlertOpen("block");
+			setAlertOpen('block');
 		}
 		const newOffset = offset + playlistsTemp.length;
 		setOffset(newOffset);
@@ -148,8 +134,7 @@ const SearchPage = (props) => {
 		console.log(nameFilterCount);
 		setBadNameCount(nameFilterCount);
 		playlistsTemp = previousFilter(playlistsTemp, tooFewFollowersList);
-		const previousFilterCount =
-			batchSize - nameFilterCount - playlistsTemp.length;
+		const previousFilterCount = batchSize - nameFilterCount - playlistsTemp.length;
 		console.log(previousFilterCount);
 		setAlreadyGotItCount(previousFilterCount);
 		let playlistsToShow = [];
@@ -160,15 +145,12 @@ const SearchPage = (props) => {
 			console.log(i);
 			let beans;
 			try {
-				beans = await axios.get(
-					`https://api.spotify.com/v1/users/${playlist.owner.id}`,
-					{
-						headers: {
-							Authorization: "Bearer " + token,
-							"Content-Type": "application/json",
-						},
-					}
-				);
+				beans = await axios.get(`https://api.spotify.com/v1/users/${playlist.owner.id}`, {
+					headers: {
+						Authorization: 'Bearer ' + token,
+						'Content-Type': 'application/json',
+					},
+				});
 			} catch (e) {
 				continue;
 			}
@@ -200,13 +182,13 @@ const SearchPage = (props) => {
 			const apiURL = `https://api.spotify.com/v1/playlists/${playlistID}`;
 			res = await axios.get(apiURL, {
 				headers: {
-					Authorization: "Bearer " + token,
-					"Content-Type": "application/json",
+					Authorization: 'Bearer ' + token,
+					'Content-Type': 'application/json',
 				},
 			});
 
 			if (res.status === 200) {
-				console.log("got data", res.data.name);
+				console.log('got data', res.data.name);
 				let d = res.data;
 				if (d.followers.total > 3) {
 					newPlaylist = {
@@ -220,53 +202,50 @@ const SearchPage = (props) => {
 					tooFewFollowersList.push(playlistID);
 				}
 			} else {
-				setAlertOpen("block");
+				setAlertOpen('block');
 			}
 		} catch (e) {
-			setAlertOpen("block");
+			setAlertOpen('block');
 		}
 	};
 
 	const copyMessage = (info) => {
-		const copyText = document.getElementById("message-small").value;
+		const minFollowersForLargeMessage = document.getElementById('message-crossover').value;
+		const copyText = document.getElementById(
+			info.followers < minFollowersForLargeMessage ? 'message-small' : 'message-large'
+		).value;
 		const songDeets = songDetails.filter((obj) => obj.name === song)[0];
 		// Replace all elements
 		const text = copyText
-			.replaceAll("{first name}", info.owner.split(" ")[0])
-			.replaceAll("{playlist name}", info.name)
-			.replaceAll("{song name}", songDeets.name)
-			.replaceAll("{song link}", songDeets.link)
-			.replaceAll("{artist name}", songDeets.artist)
-			.replaceAll(
-				"{artist flavour text}",
-				artistFlavour[songDeets.artist]
-			)
-			.replaceAll(
-				"{your first name}",
-				document.getElementById("user-name").value.split(" ")[0]
-			);
+			.replaceAll('{first name}', info.owner.split(' ')[0])
+			.replaceAll('{playlist name}', info.name)
+			.replaceAll('{song name}', songDeets.name)
+			.replaceAll('{song link}', songDeets.link)
+			.replaceAll('{artist name}', songDeets.artist)
+			.replaceAll('{artist flavour text}', artistFlavour[songDeets.artist])
+			.replaceAll('{your first name}', document.getElementById('user-name').value.split(' ')[0]);
 
-		var textArea = document.createElement("textarea");
-		textArea.style.position = "fixed";
+		var textArea = document.createElement('textarea');
+		textArea.style.position = 'fixed';
 		textArea.style.top = 0;
 		textArea.style.left = 0;
-		textArea.style.width = "2em";
-		textArea.style.height = "2em";
+		textArea.style.width = '2em';
+		textArea.style.height = '2em';
 		textArea.style.padding = 0;
-		textArea.style.border = "none";
-		textArea.style.outline = "none";
-		textArea.style.boxShadow = "none";
-		textArea.style.background = "transparent";
+		textArea.style.border = 'none';
+		textArea.style.outline = 'none';
+		textArea.style.boxShadow = 'none';
+		textArea.style.background = 'transparent';
 		textArea.value = text;
 		document.body.appendChild(textArea);
 		textArea.focus();
 		textArea.select();
 		try {
-			var successful = document.execCommand("copy");
-			var msg = successful ? "successful" : "unsuccessful";
-			console.log("Copying text command was " + msg);
+			var successful = document.execCommand('copy');
+			var msg = successful ? 'successful' : 'unsuccessful';
+			console.log('Copying text command was ' + msg);
 		} catch (err) {
-			console.log("Oops, unable to copy");
+			console.log('Oops, unable to copy');
 		}
 
 		document.body.removeChild(textArea);
@@ -274,10 +253,7 @@ const SearchPage = (props) => {
 
 	const getPlaylistsForExport = async () => {
 		let resultsArray = [];
-		localStorage.setItem(
-			"tooFewFollowersList",
-			JSON.stringify(tooFewFollowersList)
-		);
+		localStorage.setItem('tooFewFollowersList', JSON.stringify(tooFewFollowersList));
 		const playlistArray = JSON.parse(JSON.stringify(playlistsToKeep));
 		for (var i = 0; i < playlistArray.length; i++) {
 			const playlist = playlistArray[i];
@@ -289,31 +265,21 @@ const SearchPage = (props) => {
 					<td>{playlist.owner}</td>
 					<td>{playlist.owner_url}</td>
 					<td>{playlist.followers}</td>
-					<td>{song.name}</td>
+					<td>{songDetails.filter((obj) => obj.name === song)[0].name}</td>
 					<td>{searchTerm}</td>
+					<td>{document.getElementById(`fblink-${playlist.id}`).value || 'nay'}</td>
+					<td>{''}</td>
+					<td>{document.getElementById(`messaged-${playlist.id}`).checked ? 'yee' : 'nay'}</td>
 					<td>
-						{document.getElementById(`fblink-${playlist.id}`)
-							.value || "nay"}
+						{document.getElementById(`messaged-${playlist.id}`).checked
+							? document.getElementById('user-name').value
+							: ''}
 					</td>
-					<td>{""}</td>
+					<td>{''}</td>
 					<td>
-						{document.getElementById(`messaged-${playlist.id}`)
-							.checked
-							? "yee"
-							: "nay"}
-					</td>
-					<td>
-						{document.getElementById(`messaged-${playlist.id}`)
-							.checked
-							? document.getElementById("user-name").value
-							: ""}
-					</td>
-					<td>{""}</td>
-					<td>
-						{document.getElementById(`messaged-${playlist.id}`)
-							.checked
+						{document.getElementById(`messaged-${playlist.id}`).checked
 							? new Date(Date.now()).toLocaleDateString()
-							: ""}
+							: ''}
 					</td>
 				</tr>
 			);
@@ -326,16 +292,17 @@ const SearchPage = (props) => {
 		<div
 			style={{
 				width: 220,
-				background: "#ccc",
+				background: '#ccc',
 				margin: 10,
 				padding: 10,
-				position: "relative",
+				position: 'relative',
 			}}
-			key={playlist.id}>
+			key={playlist.id}
+		>
 			<img
 				src={playlist.image}
 				alt="FB pic not loading - click to view"
-				style={{ width: "100%" }}
+				style={{ width: '100%' }}
 				id={playlist.id}
 				onClick={addToList}
 			/>
@@ -351,60 +318,45 @@ const SearchPage = (props) => {
 		<div
 			key={info.id}
 			style={{
-				display: "flex",
-				flexDirection: "row",
-				width: "100%",
+				display: 'flex',
+				flexDirection: 'row',
+				width: '100%',
 				margin: 10,
-			}}>
+			}}
+		>
 			<a href={info.image} target="_blank" rel="noopener noreferrer">
-				<img
-					src={info.image}
-					width={100}
-					alt="FB pic not loading - click to view"
-				/>
+				<img src={info.image} width={100} alt="FB pic not loading - click to view" />
 			</a>
 
-			<div style={{ width: "40%" }}>
+			<div style={{ width: '40%' }}>
 				<h3 style={{ margin: 2, padding: 5 }}>{info.owner}</h3>
 				<h4 style={{ margin: 2, padding: 5 }}>{info.name}</h4>
-				<p style={{ margin: 2, padding: 5 }}>
-					{info.followers} followers
-				</p>
+				<p style={{ margin: 2, padding: 5 }}>{info.followers} followers</p>
 			</div>
-			<div style={{ display: "flex" }}>
+			<div style={{ display: 'flex' }}>
 				<a
 					href={`https://www.facebook.com/search/people/?q=${info.owner}`}
 					style={{
-						textDecoration: "none",
+						textDecoration: 'none',
 					}}
 					target="_blank"
 					rel="noopener noreferrer"
-					onClick={() => copyMessage(info)}>
+					onClick={() => copyMessage(info)}
+				>
 					<Button
 						variant="contained"
 						style={{ width: 210, marginTop: 8, marginRight: 5 }}
-						color={
-							JSON.parse(
-								localStorage.getItem("previousOwners")
-							).indexOf(info.ownerId) > -1
-								? "default"
-								: "primary"
-						}>
-						{JSON.parse(
-							localStorage.getItem("previousOwners")
-						).indexOf(info.ownerId) > -1
-							? "Owner in database"
-							: "Search on Facebook"}
+						color="primary"
+						disabled={JSON.parse(localStorage.getItem('previousOwners')).indexOf(info.ownerId) > -1}
+					>
+						{JSON.parse(localStorage.getItem('previousOwners')).indexOf(info.ownerId) > -1
+							? 'Owner in database'
+							: 'Search on Facebook'}
 					</Button>
 				</a>
 				{/* <br /> */}
 				{/* <input placeholder={"Paste FB here"} id={`fblink-${info.id}`} /> */}
-				<TextField
-					style={{ flex: 1 }}
-					label="Paste FB Here"
-					variant="outlined"
-					id={`fblink-${info.id}`}
-				/>
+				<TextField style={{ flex: 1 }} label="Paste FB Here" variant="outlined" id={`fblink-${info.id}`} />
 				<br />
 
 				<label>
@@ -413,13 +365,9 @@ const SearchPage = (props) => {
 						id={`messaged-${info.id}`}
 						name="messaged"
 						disabled={
-							JSON.parse(
-								localStorage.getItem("previousOwners")
-							).indexOf(info.ownerId) > -1
-								? true
-								: false
+							JSON.parse(localStorage.getItem('previousOwners')).indexOf(info.ownerId) > -1 ? true : false
 						}
-					/>{" "}
+					/>{' '}
 					Messaged them
 				</label>
 			</div>
@@ -439,9 +387,10 @@ const SearchPage = (props) => {
 				variant="contained"
 				color="primary"
 				onClick={() => {
-					localStorage.removeItem("token");
+					localStorage.removeItem('token');
 					window.location.reload();
-				}}>
+				}}
+			>
 				Get Spotify token
 			</Button>
 			<br />
@@ -450,10 +399,10 @@ const SearchPage = (props) => {
 				id="user-name"
 				label="Your Name (ex. Brandon Cathcart)"
 				variant="outlined"
-				style={{ width: "50%", marginBottom: 20 }}
+				style={{ width: '50%', marginBottom: 20 }}
 			/>
 			<br />
-			<FormControl style={{ minWidth: 120, width: "50%" }}>
+			<FormControl style={{ minWidth: 120, width: '50%' }}>
 				<InputLabel id="song-dropdown-label">Song</InputLabel>
 				<Select
 					labelId="song-dropdown-label"
@@ -463,7 +412,8 @@ const SearchPage = (props) => {
 					label="Song to Promote"
 					onChange={(event) => {
 						setSong(event.target.value);
-					}}>
+					}}
+				>
 					{songDropdownOptions}
 				</Select>
 			</FormControl>
@@ -473,63 +423,50 @@ const SearchPage = (props) => {
 				label="Artist flavour text"
 				variant="outlined"
 				disabled
-				value={
-					artistFlavour[
-						songDetails.filter((obj) => obj.name === song)[0]
-							.artist || ""
-					]
-				}
-				style={{ width: "100%", marginBottom: 20, marginTop: 20 }}
+				value={artistFlavour[songDetails.filter((obj) => obj.name === song)[0].artist || '']}
+				style={{ width: '100%', marginBottom: 20, marginTop: 20 }}
 			/>
 			<br />
 			<TextField
 				id="previous-playlists"
 				label="Playlist URLs from spreadsheet"
 				variant="outlined"
-				style={{ width: "50%", marginBottom: 20 }}
+				style={{ width: '50%', marginBottom: 20 }}
 			/>
 			<TextField
 				id="previous-owners"
 				label="Owner URLs from spreadsheet"
 				variant="outlined"
-				style={{ width: "50%", marginBottom: 20 }}
+				style={{ width: '50%', marginBottom: 20 }}
 			/>
 			<br />
-			<Button
-				variant="contained"
-				color="primary"
-				onClick={() => previousPicksToArray()}>
+			<Button variant="contained" color="primary" onClick={() => previousPicksToArray()}>
 				Save Setup
 			</Button>
 			<h3>2. Make sure the message looks good</h3>
 			<TextField
-				style={{ width: "50%", minHeight: 300 }}
+				style={{ width: '50%', minHeight: 300 }}
 				label="Small playlist message"
 				variant="outlined"
 				multiline
 				id="message-small"
 			/>
 			<TextField
-				style={{ width: "50%", minHeight: 300 }}
+				style={{ width: '50%', minHeight: 300 }}
 				label="Large playlist message"
 				variant="outlined"
 				multiline
-				id="message-big"
+				id="message-large"
 			/>
 			<Button
 				variant="contained"
 				color="primary"
 				style={{ marginTop: 20, marginRight: 10 }}
 				onClick={() => {
-					localStorage.setItem(
-						"message-small",
-						document.getElementById("message-small").value
-					);
-					localStorage.setItem(
-						"message-big",
-						document.getElementById("message-big").value
-					);
-				}}>
+					localStorage.setItem('message-small', document.getElementById('message-small').value);
+					localStorage.setItem('message-large', document.getElementById('message-large').value);
+				}}
+			>
 				Save Messages
 			</Button>
 			<Button
@@ -538,10 +475,11 @@ const SearchPage = (props) => {
 				style={{ marginTop: 20 }}
 				onClick={() => {
 					copyMessage({
-						name: "Test Playlist",
-						owner: "Beans McGee",
+						name: 'Test Playlist',
+						owner: 'Beans McGee',
 					});
-				}}>
+				}}
+			>
 				Test Copy Message
 			</Button>
 			<h3>3. Search for playlists on Spotify</h3>
@@ -550,71 +488,67 @@ const SearchPage = (props) => {
 					id="outlined-basic"
 					label="Spotify Search Term"
 					variant="outlined"
-					style={{ width: "50%", marginBottom: 20 }}
+					style={{ width: '50%', marginBottom: 20 }}
 					onChange={handleChange}
 					onKeyDown={_handleKeyDown}
 				/>
 				<br />
 			</div>
 			<div>
-				<p style={{ display: offset > 0 ? "block" : "none" }}>
-					Gathering 100 playlists out of {searchTotal}... Filtered{" "}
-					{badNameCount} unlikely names... Filtered{" "}
-					{alreadyGotItCount} previously logged playlists... Filtered{" "}
-					{noPicCount} without profile pictures... Returning{" "}
-					{playlists.length}.
+				<p style={{ display: offset > 0 ? 'block' : 'none' }}>
+					Gathering 100 playlists out of {searchTotal}... Filtered {badNameCount} unlikely names... Filtered{' '}
+					{alreadyGotItCount} previously logged playlists... Filtered {noPicCount} without profile pictures...
+					Returning {playlists.length}.
 				</p>
 			</div>
 			<h3>4. Pick promising playlists</h3>
 			<div
 				style={{
-					background: "green",
-					display: "flex",
-					flexDirection: "row",
-					flexWrap: "wrap",
+					background: 'green',
+					display: 'flex',
+					flexDirection: 'row',
+					flexWrap: 'wrap',
 					borderRadius: 20,
 					marginTop: 20,
-				}}>
+				}}
+			>
 				{resultCards}
 			</div>
 			<br />
-			<Button
-				variant="contained"
-				color="primary"
-				onClick={() => searchTime()}>
+			<Button variant="contained" color="primary" onClick={() => searchTime()}>
 				Get 100 more
 			</Button>
 			<h3>5. Find and message them on Facebook</h3>
+			<TextField
+				id="message-crossover"
+				label="Follower min for large playlist message"
+				defaultValue="500"
+				variant="outlined"
+				style={{ width: 400, marginBottom: 20 }}
+			/>
 			<ol>{playlistsToKeepElements}</ol>
 			<br />
 
 			<h3>6. Generate text to paste into the tracking spreadsheet</h3>
-			<Button
-				variant="contained"
-				color="primary"
-				onClick={() => getPlaylistsForExport()}>
+			<Button variant="contained" color="primary" onClick={() => getPlaylistsForExport()}>
 				Generate Copy Text
 			</Button>
 			<br />
 			<br />
-			<table style={{ width: "100%", border: "2px solid black" }}>
-				{resultsTableRows}
-			</table>
+			<table style={{ width: '100%', border: '2px solid black' }}>{resultsTableRows}</table>
 			<div
 				style={{
-					position: "fixed",
+					position: 'fixed',
 					display: alertOpen,
-					width: "100%",
+					width: '100%',
 					height: 50,
-					background: "red",
+					background: 'red',
 					top: 0,
 					left: 0,
-					textAlign: "center",
-				}}>
-				<p style={{ color: "white" }}>
-					Error with Spotify request - please get new Spotify token
-					(step 1)
-				</p>
+					textAlign: 'center',
+				}}
+			>
+				<p style={{ color: 'white' }}>Error with Spotify request - please get new Spotify token (step 1)</p>
 			</div>
 		</Container>
 	);
