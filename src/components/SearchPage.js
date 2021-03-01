@@ -60,8 +60,8 @@ const SearchPage = (props) => {
 		console.log(token);
 		document.getElementById("message-small").value =
 			localStorage.getItem("message-small") || defaultSmallMessage;
-		document.getElementById("message-big").value =
-			localStorage.getItem("message-big") || defaultBigMessage;
+		document.getElementById("message-large").value =
+			localStorage.getItem("message-large") || defaultBigMessage;
 		document.getElementById("user-name").value =
 			localStorage.getItem("userName") || "";
 		tooFewFollowersList = localStorage.getItem("tooFewFollowersList") || [];
@@ -228,7 +228,14 @@ const SearchPage = (props) => {
 	};
 
 	const copyMessage = (info) => {
-		const copyText = document.getElementById("message-small").value;
+		const minFollowersForLargeMessage = document.getElementById(
+			"message-crossover"
+		).value;
+		const copyText = document.getElementById(
+			info.followers < minFollowersForLargeMessage
+				? "message-small"
+				: "message-large"
+		).value;
 		const songDeets = songDetails.filter((obj) => obj.name === song)[0];
 		// Replace all elements
 		const text = copyText
@@ -289,7 +296,9 @@ const SearchPage = (props) => {
 					<td>{playlist.owner}</td>
 					<td>{playlist.owner_url}</td>
 					<td>{playlist.followers}</td>
-					<td>{song.name}</td>
+					<td>
+						{songDetails.filter((obj) => obj.name === song)[0].name}
+					</td>
 					<td>{searchTerm}</td>
 					<td>
 						{document.getElementById(`fblink-${playlist.id}`)
@@ -383,12 +392,11 @@ const SearchPage = (props) => {
 					<Button
 						variant="contained"
 						style={{ width: 210, marginTop: 8, marginRight: 5 }}
-						color={
+						color="primary"
+						disabled={
 							JSON.parse(
 								localStorage.getItem("previousOwners")
 							).indexOf(info.ownerId) > -1
-								? "default"
-								: "primary"
 						}>
 						{JSON.parse(
 							localStorage.getItem("previousOwners")
@@ -513,7 +521,7 @@ const SearchPage = (props) => {
 				label="Large playlist message"
 				variant="outlined"
 				multiline
-				id="message-big"
+				id="message-large"
 			/>
 			<Button
 				variant="contained"
@@ -525,8 +533,8 @@ const SearchPage = (props) => {
 						document.getElementById("message-small").value
 					);
 					localStorage.setItem(
-						"message-big",
-						document.getElementById("message-big").value
+						"message-large",
+						document.getElementById("message-large").value
 					);
 				}}>
 				Save Messages
@@ -584,6 +592,13 @@ const SearchPage = (props) => {
 				Get 100 more
 			</Button>
 			<h3>5. Find and message them on Facebook</h3>
+			<TextField
+				id="message-crossover"
+				label="Follower min for large playlist message"
+				defaultValue="500"
+				variant="outlined"
+				style={{ width: 400, marginBottom: 20 }}
+			/>
 			<ol>{playlistsToKeepElements}</ol>
 			<br />
 
