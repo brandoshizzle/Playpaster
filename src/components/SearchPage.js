@@ -472,7 +472,6 @@ const SearchPage = (props) => {
 				id="flavour-text"
 				label="Artist flavour text"
 				variant="outlined"
-				disabled
 				value={
 					artistFlavour[
 						songDetails.filter((obj) => obj.name === song)[0]
